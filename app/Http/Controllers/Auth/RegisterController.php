@@ -83,10 +83,12 @@ class RegisterController extends Controller
             }
         }
         if($result){
+            $req->avatar->store('public/user');
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
+                'avatar' => $req->avatar->hashName()
             ]);
             if($user){
                 $data['success'] = true;
