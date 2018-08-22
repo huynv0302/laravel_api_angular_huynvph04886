@@ -39,7 +39,7 @@ Route::get('category/getone/{cate_id}', 'CategoryController@getOneCate');
 Route::post('post/list', 'PostController@index');
 Route::get('post/all/{limit?}', 'PostController@getAll');
 Route::get('post/find/{id}', 'PostController@findById');
-Route::post('post/save', 'PostController@save');
+Route::get('post/delete/{id}', 'PostController@delete');
 
 Route::get('post_category/{cate_id}/{limit?}', 'PostController@getPostCate');
 Route::get('post/hot/{limit?}', 'PostController@getHotPost');

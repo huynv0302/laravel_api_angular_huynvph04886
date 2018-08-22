@@ -37,12 +37,26 @@ class PostController extends Controller
     public function save(Request $request){
         $model = $request->id != null ? Post::find($request->id) : new Post();
         $model->fill($request->all());
-        $path = false;
-        if($request->hasFile('feature_image')){
-            $path = $request->feature_image->storeAs('uploads', uniqid().'-'.$request->feature_image->getClientOriginalName());
-            $model->feature_image = 'http://localhost:8000/'.$path;
+        $model->user_id = 1;
+        $path = false;  
+        $result = [];
+        if($request->hasFile('feature_images')){
+            $request->feature_images->store('public/uploads');
+            // $path = uniqid().'-'.$request->feature_images->getClientOriginalName();
+            $model->feature_images = 'http://localhost:8000/storage/uploads/'.$request->feature_images->hashName();
         }
+        elseif ($request->imageold != null) {
+            $model->feature_images = $request->imageold;
+        }
+        else{
+            $result['message'] = 'bạn chưa chọn ảnh';
+            return response()->json($result);
+        }
+        $model->slug = str_slug($request->title, '-');
         $result = $model->save();
+        if($result){
+            $model['success'] = true;
+        }
         return response()->json($model);
     }
     public function getAll(Request $req){
@@ -54,6 +68,7 @@ class PostController extends Controller
         if($req->type){
             $type = $req->type;
         }
+
         $result = DB::table("posts")
                     ->join('categories', 'posts.cate_id', '=', 'categories.id')
                     ->join('users', 'posts.user_id', '=', 'users.id')
@@ -61,6 +76,16 @@ class PostController extends Controller
                     ->where('type',$type)
                     ->orderBy('id','desc')
                     ->paginate($limit);
+        if($req->cate_id != null && $req->cate_id > 0){
+            $result = DB::table("posts")
+                        ->join('categories', 'posts.cate_id', '=', 'categories.id')
+                        ->join('users', 'posts.user_id', '=', 'users.id')
+                        ->select('posts.*', 'categories.name as cate_name', 'categories.slug as cate_slug', 'users.name as user_name')
+                        ->where('type',$type)
+                        ->where('cate_id',$req->cate_id)
+                        ->orderBy('id','desc')
+                        ->paginate($limit);
+        }
         if(count($result) < 4 && $req->type){
             $result = DB::table("posts")
                         ->join('categories', 'posts.cate_id', '=', 'categories.id')
@@ -164,5 +189,17 @@ class PostController extends Controller
         $model = Category::find($cate_id);
         $result = Category::where('parent_id',$model->id)->get();
         return $result;
+    }
+
+    public function delete(Request $req){
+        $model = Post::find($req->id);
+        $data = [];
+        $success = false;
+        if($model){
+            $model->delete();
+            $success = true;
+        }
+        $data['success'] = $success;
+        return response()->json($data);
     }
 }
