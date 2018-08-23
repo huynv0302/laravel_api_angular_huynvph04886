@@ -61,6 +61,7 @@ class PostController extends Controller
     }
     public function getAll(Request $req){
         $limit = 16;
+        $orderby = 'desc';
         if($req->limit){
             $limit = $req->limit;
         }
@@ -68,13 +69,15 @@ class PostController extends Controller
         if($req->type){
             $type = $req->type;
         }
-
+        if($req->orderby == 1){
+            $orderby = 'asc';
+        }
         $result = DB::table("posts")
                     ->join('categories', 'posts.cate_id', '=', 'categories.id')
                     ->join('users', 'posts.user_id', '=', 'users.id')
                     ->select('posts.*', 'categories.name as cate_name', 'categories.slug as cate_slug', 'users.name as user_name')
                     ->where('type',$type)
-                    ->orderBy('id','desc')
+                    ->orderBy('id',$orderby)
                     ->paginate($limit);
         if($req->cate_id != null && $req->cate_id > 0){
             $result = DB::table("posts")
@@ -83,7 +86,7 @@ class PostController extends Controller
                         ->select('posts.*', 'categories.name as cate_name', 'categories.slug as cate_slug', 'users.name as user_name')
                         ->where('type',$type)
                         ->where('cate_id',$req->cate_id)
-                        ->orderBy('id','desc')
+                        ->orderBy('id',$orderby)
                         ->paginate($limit);
         }
         if(count($result) < 4 && $req->type){
@@ -91,7 +94,7 @@ class PostController extends Controller
                         ->join('categories', 'posts.cate_id', '=', 'categories.id')
                         ->join('users', 'posts.user_id', '=', 'users.id')
                         ->select('posts.*', 'categories.name as cate_name', 'categories.slug as cate_slug', 'users.name as user_name')
-                        ->orderBy('id','desc')
+                        ->orderBy('id',$orderby)
                         ->paginate($limit);
         }
         return response()->json($result);
